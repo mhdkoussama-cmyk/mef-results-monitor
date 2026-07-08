@@ -32,11 +32,16 @@ jobs:
           restore-keys: |
             mef-state-
 
-      - name: Run monitor
+      - name: Poll every 30 seconds for 5 minutes
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python monitor.py
+        run: |
+          for i in $(seq 1 9); do
+            echo "=== Check #$i ==="
+            python monitor.py
+            sleep 30
+          done
 
       - name: Save state cache
         if: always()
