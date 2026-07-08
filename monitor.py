@@ -40,9 +40,24 @@ state = load_state()
 
 for url in URLS:
 
-    r = requests.get(url, timeout=30)
+   try:
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
-    soup = BeautifulSoup(r.text, "html.parser")
+    r = requests.get(
+        url,
+        headers=headers,
+        timeout=20
+    )
+
+    r.raise_for_status()
+
+except Exception as e:
+    print(f"Could not access {url}: {e}")
+    continue
+
+soup = BeautifulSoup(r.text, "html.parser")
 
     text = soup.get_text(" ", strip=True).lower()
 
