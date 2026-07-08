@@ -1,30 +1,46 @@
-name: Monitor MEF
+name: MEF Oral List Monitor
 
 on:
   schedule:
-    - cron: "*/2 * * * *"
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
 
-  workflow_dispatch:
+concurrency:
+  group: mef-monitor
+  cancel-in-progress: false
 
 jobs:
-
-  check:
-
+  monitor:
     runs-on: ubuntu-latest
-
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
-      - run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - run: python monitor.py
+      - name: Restore state cache
+        uses: actions/cache@v4
+        with:
+          path: state.json
+          key: mef-state-${{ github.run_id }}
+          restore-keys: |
+            mef-state-
 
+      - name: Run monitor
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python monitor.py
+
+      - name: Save state cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: state.json
+          key: mef-state-${{ github.run_id }}
