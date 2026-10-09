@@ -1,9 +1,13 @@
-name: MEF Oral List Monitor
+
+name: MEF Final Results Monitor
 
 on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 concurrency:
   group: mef-monitor
@@ -12,6 +16,8 @@ concurrency:
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    timeout-minutes: 6
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,26 +30,28 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Restore state cache
-        uses: actions/cache@v4
+      - name: Restore previous state
+        uses: actions/cache/restore@v4
         with:
           path: state.json
           key: mef-state-${{ github.run_id }}
           restore-keys: |
             mef-state-
 
-      - name: Poll every 30 seconds for 5 minutes
+      - name: Check official page every 30 seconds
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          for i in $(seq 1 9); do
-            echo "=== Check #$i ==="
-            python monitor.py
-            sleep 30
+          for i in $(seq 1 10); do
+            echo "=== Verification $i/10 ==="
+            python monitor.py || echo "Verification failed; continuing."
+            if [ "$i" -lt 10 ]; then
+              sleep 30
+            fi
           done
 
-      - name: Save state cache
+      - name: Save latest state
         if: always()
         uses: actions/cache/save@v4
         with:
