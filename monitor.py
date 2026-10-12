@@ -10,9 +10,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: mef-monitor
-  cancel-in-progress: false
-
+  group: mef-monitor-v2
+  cancel-in-progress: true
 jobs:
   monitor:
     runs-on: ubuntu-latest
